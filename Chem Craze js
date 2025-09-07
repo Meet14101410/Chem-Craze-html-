@@ -1,0 +1,74 @@
+// ==== Chem Craze Game ====
+
+// Questions pool: element symbols with names
+const QUESTIONS = [
+  { s: "H", a: "Hydrogen" },
+  { s: "He", a: "Helium" },
+  { s: "Li", a: "Lithium" },
+  { s: "Be", a: "Beryllium" },
+  { s: "B", a: "Boron" },
+  { s: "C", a: "Carbon" },
+  { s: "N", a: "Nitrogen" },
+  { s: "O", a: "Oxygen" },
+  { s: "F", a: "Fluorine" },
+  { s: "Ne", a: "Neon" },
+  { s: "Na", a: "Sodium" },
+  { s: "Mg", a: "Magnesium" },
+  { s: "Al", a: "Aluminium" },
+  { s: "Si", a: "Silicon" },
+  { s: "P", a: "Phosphorus" },
+  { s: "S", a: "Sulfur" },
+  { s: "Cl", a: "Chlorine" },
+  { s: "Ar", a: "Argon" },
+  { s: "K", a: "Potassium" },
+  { s: "Ca", a: "Calcium" },
+  { s: "Fe", a: "Iron" },
+  { s: "Cu", a: "Copper" },
+  { s: "Ag", a: "Silver" },
+  { s: "Au", a: "Gold" },
+  { s: "Zn", a: "Zinc" }
+];
+
+const roundsTotal = 5;
+let round = 0, score = 0, current = null;
+
+const el = id => document.getElementById(id);
+const symbolEl = el('symbol'),
+      optionsEl = el('options'),
+      roundEl = el('round'),
+      scoreEl = el('score'),
+      nextBtn = el('next'),
+      restartBtn = el('restart');
+
+// Shuffle utility
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+// Pick one question + wrong answers
+function pickQuestion() {
+  const pool = [...QUESTIONS];
+  const correct = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+  const choices = [correct];
+  shuffle(pool);
+  for (let i = 0; i < 3; i++) choices.push(pool[i]); // 3 wrong
+  return { correct, choices: shuffle(choices) };
+}
+
+// Render a round
+function renderRound() {
+  optionsEl.innerHTML = '';
+  nextBtn.disabled = true;
+
+  if (round >= roundsTotal) {
+    symbolEl.textContent = "🎉 Done!";
+    optionsEl.innerHTML = `<div style="grid-column:1/-1;padding:12px;">Final score: <strong>${score}</strong> / ${roundsTotal}</div>`;
+    return;
+  }
+
+  round++;
+  roundEl.textContent = round;
+
+  const q = pickQuestion();
+  current = q;
+  symbolEl
