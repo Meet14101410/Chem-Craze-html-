@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chem Craze</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--accent:#2b6cb0;--ok:#2f855a;--bad:#e53e3e}
+    body{font-family:Inter,system-ui,Arial;margin:0;background:linear-gradient(180deg,#e9f0fb,white);display:flex;align-items:center;justify-content:center;height:100vh}
+    .game{width:360px;background:var(--card);border-radius:14px;padding:20px;box-shadow:0 8px 30px rgba(30,50,80,0.08);text-align:center}
+    h1{margin:0 0 6px;font-size:20px;color:var(--accent)}
+    p.lead{margin:0 0 18px;color:#475569;font-size:13px}
+    .card{border-radius:10px;padding:18px;background:#f8fafc;margin-bottom:14px}
+    .symbol{font-size:48px;font-weight:700;color:#0b3d91}
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    button.opt{padding:10px;border-radius:8px;border:1px solid #e6edf7;background:white;cursor:pointer;font-weight:600}
+    button.opt:disabled{opacity:.65;cursor:default}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:#334155}
+    .controls{margin-top:14px;display:flex;gap:8px;justify-content:center}
+    .btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:600}
+    .small{font-size:12px;color:#64748b}
+    .correct{border-color:var(--ok);background:rgba(47,133,90,0.08)}
+    .wrong{border-color:var(--bad);background:rgba(229,62,62,0.06)}
+    footer{margin-top:12px;font-size:12px;color:#94a3b8}
+  </style>
+</head>
+<body>
+  <div class="game" id="app">
+    <h1>⚗️ Chem Craze</h1>
+    <p class="lead">Match the element symbol to its correct name — 5 quick rounds!</p>
+
+    <div class="card">
+      <div class="symbol" id="symbol">Fe</div>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div class="meta">
+      <div>Round: <strong id="round">0</strong>/5</div>
+      <div>Score: <strong id="score">0</strong></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="next" disabled>Next</button>
+      <button class="btn" id="restart" style="background:#6b7280">Restart</button>
+    </div>
+
+    <footer class="small">Tip: click the correct name. Wrong answers show in red.</footer>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      {s:"H",   a:"Hydrogen"},
+      {s:"He",  a:"Helium"},
+      {s:"Li",  a:"Lithium"},
+      {s:"Be",  a:"Beryllium"},
+      {s:"B",   a:"Boron"},
+      {s:"C",   a:"Carbon"},
+      {s:"N",   a:"Nitrogen"},
+      {s:"O",   a:"Oxygen"},
+      {s:"F",   a:"Fluorine"},
+      {s:"Ne",  a:"Neon"},
+      {s:"Na",  a:"Sodium"},
+      {s:"Mg",  a:"Magnesium"},
+      {s:"Al",  a:"Aluminium"},
+      {s:"Si",  a:"Silicon"},
+      {s:"P",   a:"Phosphorus"},
+      {s:"S",   a:"Sulfur"},
+      {s:"Cl",  a:"Chlorine"},
+      {s:"Ar",  a:"Argon"},
+      {s:"K",   a:"Potassium"},
+      {s:"Ca",  a:"Calcium"},
+      {s:"Fe",  a:"Iron"},
+      {s:"Cu",  a:"Copper"},
+      {s:"Ag",  a:"Silver"},
+      {s:"Au",  a:"Gold"},
+      {s:"Zn",  a:"Zinc"}
+    ];
+
+    const roundsTotal = 5;
+    let round = 0, score = 0, current = null;
+
+    const el = id => document.getElementById(id);
+    const symbolEl = el('symbol'), optionsEl = el('options'), roundEl = el('round'), scoreEl = el('score');
+    const nextBtn = el('next'), restartBtn = el('restart');
+
+    function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+    function pickQuestion(){
+      const pool = [...QUESTIONS];
+      const correct = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+      const choices = [correct];
+      shuffle(pool);
+      // pick 3 wrong choices
+      for(let i=0;i<3;i++) choices.push(pool[i]);
+      shuffle(choices);
+      return {correct, choices};
+    }
+
+    function renderRound(){
+      optionsEl.innerHTML = '';
+      nextBtn.disabled = true;
+      if(round >= roundsTotal){
+        symbolEl.textContent = "🎉 Done!";
+        optionsEl.innerHTML = `<div style="grid-column:1/-1;padding:12px;">Final score: <strong>${score}</strong> / ${roundsTotal}</div>`;
+        return;
+      }
+      round++;
+      roundEl.textContent = round;
+      const q = pickQuestion();
+      current = q;
+      symbolEl.textContent = q.correct.s;
+      q.choices.forEach(choice => {
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = choice.a;
+        b.onclick = () => handleAnswer(b, choice);
+        optionsEl.appendChild(b);
+      });
+    }
+
+    function handleAnswer(btn, choice){
+      // disable all
+      Array.from(optionsEl.children).forEach(b => b.disabled = true);
+      if(choice.a === current.correct.a){
+        btn.classList.add('correct');
+        score++;
+        scoreEl.textContent = score;
+      } else {
+        btn.classList.add('wrong');
+        // highlight correct
+        Array.from(optionsEl.children).find(b=>b.textContent===current.correct.a)?.classList.add('correct');
+      }
+      nextBtn.disabled = false;
+      if(round >= roundsTotal) nextBtn.textContent = 'See Results';
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if(round >= roundsTotal){
+        // show final message and allow restart
+        symbolEl.textContent = "Your Score";
+        optionsEl.innerHTML = `<div style="grid-column:1/-1;padding:14px;font-size:18px"><strong>${score} / ${roundsTotal}</strong></div>`;
+        nextBtn.disabled = true;
+      } else {
+        renderRound();
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      round = 0; score = 0; current = null;
+      roundEl.textContent = 0; scoreEl.textContent = 0;
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = true;
+      renderRound();
+    });
+
+    // start
+    renderRound();
+  </script>
+</body>
+</html>
